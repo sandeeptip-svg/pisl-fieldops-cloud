@@ -1,17 +1,12 @@
-# PISL FieldOps Enterprise v36.0 Stable Architecture
+# PISL FieldOps Enterprise v36.2 Mobile Push Stable Cloud Edition
 
-Modular Firebase cloud pilot build for Payaswini Integrated Solutions.
+Improvements:
+- Mobile browser/PWA layout optimized.
+- Mobile pop-up notification permission and service worker notification display added.
+- Notification routing improved: assignee, support users, creator, reporting chain, supervisors/coordinators/admin.
+- Dashboard job status counters visible to all roles.
+- Simplified report preview/share actions.
+- Fire Sprinkler & Hydrant System retained.
+- Firebase live sync retained.
 
-## Upload to GitHub Pages
-Upload all files/folders at repository root:
-- index.html
-- manifest.json
-- service-worker.js
-- css/
-- js/
-- assets/
-
-## Firebase
-Uses project: pisl-field-ops
-Firestore document: pislFieldOps/sharedState
-Authentication: Anonymous enabled for pilot.
+Note: Browser/PWA notifications require HTTPS hosting and user permission. GitHub Pages is HTTPS-compatible.
