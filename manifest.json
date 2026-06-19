@@ -1,5 +1,5 @@
 {
-  "name": "PISL FieldOps Enterprise v36.2.1",
+  "name": "PISL FieldOps Enterprise v36.3.0",
   "short_name": "PISL FieldOps",
   "start_url": "./index.html",
   "display": "standalone",
@@ -12,5 +12,5 @@
       "type": "image/png"
     }
   ],
-  "description": "PISL FieldOps Enterprise Mobile Stable PWA Edition"
+  "description": "PISL FieldOps Enterprise Photo Evidence Stable PWA Edition"
 }
