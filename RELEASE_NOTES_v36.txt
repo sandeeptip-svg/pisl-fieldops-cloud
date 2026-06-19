@@ -1,0 +1,10 @@
+PISL FieldOps Enterprise v36.0 Stable Architecture
+- Split app into modular folders: css, js, assets, docs
+- Firebase live shared-state sync retained
+- Stable dashboard/module navigation
+- Flexible job assignment, reassignment and delete permissions
+- Engineer can self-create/self-assign jobs
+- Engineer can close only self-created/self-assigned Service Call jobs
+- User management, customer/site master and asset register added
+- Reports exclude internal check-in/check-out/timeline from customer-facing output
+- Proposal/quotation module retained for Super Admin

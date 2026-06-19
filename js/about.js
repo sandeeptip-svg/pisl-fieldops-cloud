@@ -1,0 +1,2 @@
+import { VERSION } from './state.js';
+export function renderAbout(){return `<div class="card"><h2>PISL FieldOps Enterprise</h2><p><b>${VERSION}</b></p><p>Stable modular Firebase architecture for Payaswini Integrated Solutions.</p><ul><li>Cloud sync and notifications</li><li>Flexible job assignment and reassignment</li><li>User, customer, site and asset masters</li><li>Service, PM, installation, commissioning and survey reports</li><li>Proposal / quotation module</li></ul><p class="sub">© 2026 Payaswini Integrated Solutions</p></div>`}
