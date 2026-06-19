@@ -1,0 +1,20 @@
+PISL FieldOps Enterprise v34.0.1 Final
+
+Final corrected release.
+
+Validated items:
+- Login action fixed and retained from working build.
+- All visible version labels updated to v34.0.1 Final.
+- Browser title updated.
+- Header/About labels updated.
+- Logo PNG included.
+- Service worker cache renamed to avoid old cached versions.
+
+Login credentials:
+- sandeep / admin123
+- coordinator / coord123
+- supervisor / super123
+- engineer / eng123
+
+Important after upload:
+Clear browser/PWA cache or uninstall old PWA before testing this final build.

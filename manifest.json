@@ -1,0 +1,15 @@
+{
+  "name": "PISL FieldOps Enterprise v35 Cloud Edition",
+  "short_name": "PISL FieldOps v35",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#163e73",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
