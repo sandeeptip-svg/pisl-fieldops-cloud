@@ -1,12 +1,14 @@
-# PISL FieldOps Enterprise v36.2 Mobile Push Stable Cloud Edition
+# PISL FieldOps Enterprise v36.2.1 Mobile Stable PWA Edition
 
-Improvements:
-- Mobile browser/PWA layout optimized.
-- Mobile pop-up notification permission and service worker notification display added.
-- Notification routing improved: assignee, support users, creator, reporting chain, supervisors/coordinators/admin.
-- Dashboard job status counters visible to all roles.
-- Simplified report preview/share actions.
-- Fire Sprinkler & Hydrant System retained.
-- Firebase live sync retained.
+Bug-fix build for mobile testing.
 
-Note: Browser/PWA notifications require HTTPS hosting and user permission. GitHub Pages is HTTPS-compatible.
+## Fixes
+- Fixed dashboard error: `jobsTable is not defined`.
+- Added Install App button on login screen.
+- Retained Firebase live sync and mobile notification support.
+- Updated service worker cache to avoid old build loading.
+
+## Upload to GitHub Pages
+Upload all files in this folder: index.html, logo.png, manifest.json, service-worker.js, README.md.
+
+After upload, clear browser cache / remove old PWA icon and install again.
