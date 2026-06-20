@@ -1,16 +1,1 @@
-{
-  "name": "PISL FieldOps Enterprise v36.3.0",
-  "short_name": "PISL FieldOps",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#f4f7fb",
-  "theme_color": "#163e73",
-  "icons": [
-    {
-      "src": "logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "description": "PISL FieldOps Enterprise Photo Evidence Stable PWA Edition"
-}
+{"name":"PISL FieldOps Enterprise","short_name":"PISL FieldOps","start_url":"./index.html","display":"standalone","background_color":"#f4f7fb","theme_color":"#163e73","icons":[{"src":"logo.png","sizes":"512x512","type":"image/png"}]}
