@@ -1,3 +1,3 @@
-# PISL FieldOps Enterprise v36.4 Proposal Stable PWA Edition
+# PISL FieldOps Enterprise v36.7 Cloud Maintenance PWA Edition
 
-Firebase live PWA build with saved proposal library, editable default terms, zoom preview, ready-to-send print/PDF proposal copy, optional photo evidence, mobile layout fixes, and FieldOps workflows.
+Adds admin database maintenance tools for cleaning/purging jobs/projects, proposals and notifications while retaining user/customer/site libraries. Includes Firebase sync, mobile PWA, proposal library, optional photo evidence and database backup before destructive actions.
