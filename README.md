@@ -1,34 +1,33 @@
-# PISL FieldOps Enterprise v39.0 Core Scope
+# PISL FieldOps Enterprise v39.1 Core + FCM
 
-Active scope:
-- User Management
-- Role Management
-- Job Assignment
-- Realtime Job Updates
-- In-app / browser notifications
-- System-wise Checklists
-- Service Reports
-- File/Image Uploads
-- Coordinator Dashboard
-- Supervisor Dashboard
-- Engineer Dashboard
-- Offline Draft / Local Cache Support
-- Firestore Sync
-- WhatsApp Report Sharing
-- Email Report Sharing
-- Proposal / Quotation Reference
+This GitHub-ready build keeps the existing Firebase project details unchanged in `js/firebase-config.js`.
 
-Removed from this core build as requested:
-- Firebase Cloud Messaging background push scaffold
-- Attendance Dashboard
-- GPS Check-In / Check-Out
-- QR Asset Scanning
-- SLA Timer Engine
-- Asset-wise Service History
+## Active modules
+- Dashboard
+- Job assignment
+- Realtime Firestore job updates
+- Firebase Cloud Messaging device token registration
+- In-app/browser notifications
+- Customer Master
+- Site Master
+- Engineer Master view
+- System-wise checklist templates
+- Photo evidence with preview and compression
+- Branded service report print/PDF
+- WhatsApp report sharing
+- Email report sharing
+- Proposal / quotation reference
+- Admin backup and notification cleanup
 
-Important production note:
-Before live deployment, replace anonymous authentication and hardcoded demo passwords with Firebase Authentication and role-based Firestore security rules.
+## Still excluded as requested
+- Attendance
+- GPS check-in/check-out
+- QR asset scanning
+- SLA timer
+- Asset-wise service history
 
+## FCM note
+Firebase config is preserved. To enable real background push on a device, open Administration and paste the Firebase Web Push public VAPID key once, then click **Enable FCM Alerts**. The app stores the device token in Firestore collection `pushTokens`.
 
-## Firebase config preserved
-This build keeps the existing Firebase project settings unchanged in `js/firebase-config.js`. You can replace the GitHub repository files directly without manually editing Firebase settings.
+## Important production note
+This build still uses demo username/password login with anonymous Firebase auth. Before full production deployment, replace this with Firebase Authentication and role-based Firestore security rules.

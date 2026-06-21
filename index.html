@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>PISL FieldOps Enterprise v39.0</title>
+<title>PISL FieldOps Enterprise v39.1 FCM Core</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="css/main.css">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 </head>
 <body>
 <div id="drawerBackdrop" class="drawerBackdrop" onclick="toggleMenu()"></div>
@@ -17,9 +18,9 @@
   <div class="login-card">
     <img src="logo.png" class="login-logo" alt="PISL">
     <h1>PISL FieldOps Enterprise</h1>
-    <p>Core Field Operations Platform</p>
-    <label>Username</label><input id="u" placeholder="Username">
-    <label>Password</label><input id="p" type="password" placeholder="Password">
+    <p>v39.1 Core + FCM Field Operations Platform</p>
+    <label>Username</label><input id="u" placeholder="Username" autocomplete="username">
+    <label>Password</label><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
     <div id="loginMsg" class="msg"></div>
     <button class="btn full" onclick="login()">Login</button>
     <button id="installBtn" class="btn secondary full hidden" onclick="installPWA()">Install App</button>
@@ -36,8 +37,8 @@
   <main class="main">
     <header class="topbar">
       <button class="menuBtn" onclick="toggleMenu()">☰</button>
-      <div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">v39.0 Core FieldOps Scope</p></div>
-      <button class="btn secondary" onclick="enableInAppAlerts()">Enable Alerts</button>
+      <div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">v39.1 Core + FCM</p></div>
+      <button class="btn secondary" onclick="enableFCM()">Enable FCM Alerts</button>
     </header>
     <section id="view"></section>
   </main>
