@@ -1,470 +1,92 @@
-const VERSION = 'v37.1 Polished Enterprise Scale Architecture';
+const VERSION='v39.0 Core FieldOps Scope';
+const LS='pisl_v39_core_cache';
+let current=null, activeView='dashboard', db=null, storage=null, cloudReady=false, unsubscribers=[], deferredPrompt=null;
+let state={users:[],jobs:[],notifications:[],customers:[],sites:[],proposals:[]};
 
-const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBSJdmxuLDMLv6Tv13vo7ho9t2v1v1yT38",
-  authDomain: "pisl-field-ops.firebaseapp.com",
-  projectId: "pisl-field-ops",
-  storageBucket: "pisl-field-ops.firebasestorage.app",
-  messagingSenderId: "244015324981",
-  appId: "1:244015324981:web:e990586d3636c55cdaf67c"
-};
-
-const DEFAULT_USERS = [
-  {id:'u1', username:'sandeep', password:'admin123', name:'Sandeep K', role:'Admin', squad:'Management'},
-  {id:'u2', username:'partner', password:'partner123', name:'Business Partner', role:'Partner', squad:'Accounts & Logistics'},
-  {id:'u3', username:'ramesh', password:'eng123', name:'Ramesh', role:'Engineer', squad:'Projects Squad'},
-  {id:'u4', username:'nanda', password:'eng123', name:'Nandakumara M', role:'Engineer', squad:'Projects Squad'},
-  {id:'u5', username:'service1', password:'eng123', name:'Service Eng 1', role:'Engineer', squad:'Service/AMC Squad'}
+const DEFAULT_USERS=[
+ {id:'u_admin',username:'sandeep',password:'admin123',name:'Sandeep K',role:'Admin',managerId:null,active:true},
+ {id:'u_coord',username:'coordinator',password:'coord123',name:'Coordinator',role:'Coordinator',managerId:'u_admin',active:true},
+ {id:'u_super',username:'supervisor',password:'super123',name:'Supervisor',role:'Supervisor',managerId:'u_admin',active:true},
+ {id:'u_eng',username:'engineer',password:'eng123',name:'Engineer',role:'Engineer',managerId:'u_super',active:true},
+ {id:'u_view',username:'viewer',password:'view123',name:'Viewer',role:'Viewer',managerId:'u_admin',active:true}
 ];
 
-let state = {
-  users: DEFAULT_USERS.slice(),
-  jobs: [],
-  proposals: [],
-  clients: ['Swiggy', 'Tablespace', 'Clicktech', 'Tekion', 'PayPal', 'Godrej', 'BAHL'],
-  sites: ['Terminal 1 Site', 'Whitefield Zone', 'Electronic City Facility', '16th Floor Corporate HQ']
+const SYSTEMS=['CCTV','Access Control','Fire Alarm','Public Address','Water Leak Detection','Fire Extinguisher','Fire Sprinkler','Fire Hydrant','Emergency Lighting','LED Signage','Network/Structured Cabling','Other'];
+const STATUSES=['Assigned','Accepted','Working','Report Draft','Report Shared','Awaiting Closure','Closed'];
+const CHECKLIST_TEMPLATES={
+ 'CCTV':['Camera physical condition verified','Camera view/angle checked','Live view confirmed','Recording playback checked','Date/time verified','Remarks captured'],
+ 'Access Control':['Door lock condition checked','Reader operation checked','Exit switch/RTE checked','Door sensor status checked','Access event verified','Remarks captured'],
+ 'Fire Alarm':['Panel status normal/fault checked','Detector/MCP zone condition checked','Hooter/sounder condition checked','Battery/SMPS condition checked','Loop/device remarks captured'],
+ 'Public Address':['Amplifier/controller status checked','Microphone/paging checked','Speaker zone audio checked','Volume/clarity checked','Remarks captured'],
+ 'Water Leak Detection':['Panel status checked','Sensing cable condition checked','Hooter/relay output checked','Location mapping verified','Remarks captured'],
+ 'Fire Extinguisher':['Cylinder condition checked','Pressure/weight checked','Seal/hose/nozzle checked','Expiry/refill due checked','Location tag verified'],
+ 'Fire Sprinkler':['Valve condition checked','Pressure gauge checked','Sprinkler head visual check','Flow/tamper status checked','Remarks captured'],
+ 'Fire Hydrant':['Hose reel/hose box condition checked','Valve/nozzle condition checked','Pressure/line condition checked','Pump interface remarks captured'],
+ 'Emergency Lighting':['Lamp glowing checked','Battery backup checked','Charging indicator checked','Mounting/signage visibility checked'],
+ 'LED Signage':['LED strip/module checked','Battery backup checked','Charging status checked','Direction visibility checked'],
+ 'Network/Structured Cabling':['Cable/termination checked','Rack/patching verified','Link status checked','Labeling checked'],
+ 'Other':['Physical condition checked','Functional test completed','Client remarks captured']
 };
 
-let current = null;
-let activeView = 'dashboard';
-const LS = 'pisl_fieldops_enterprise_state';
-let db = null, cloudReady = false;
-let lastVisibleJobDoc = null;
-const JOBS_PAGE_SIZE = 15;
-window.currentJobFilters = { status: 'All', engineer: 'All' };
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function uid(p='ID'){return p+'-'+new Date().toISOString().slice(0,10).replaceAll('-','')+'-'+Math.floor(Math.random()*90000+10000)}
+function now(){return new Date().toISOString()}
+function loadLocal(){try{let s=JSON.parse(localStorage.getItem(LS)); if(s)state={...state,...s}}catch(e){}; if(!state.users?.length)state.users=DEFAULT_USERS.slice()}
+function saveLocal(){localStorage.setItem(LS,JSON.stringify(state))}
+function initFirebase(){try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();storage=firebase.storage();cloudReady=true;}catch(e){console.warn(e)}}
+async function ensureSeed(){const s=await db.collection('users').limit(1).get(); if(s.empty){for(const u of DEFAULT_USERS) await db.collection('users').doc(u.id).set(u)}}
+async function pullUsers(){const s=await db.collection('users').get();state.users=s.docs.map(d=>({id:d.id,...d.data()}));saveLocal()}
 
-function normalizeState() {
-  if (!state || typeof state !== 'object') state = {};
-  if (!Array.isArray(state.users)) state.users = DEFAULT_USERS.slice();
-  if (!Array.isArray(state.jobs)) state.jobs = [];
-  if (!Array.isArray(state.proposals)) state.proposals = [];
-  return state;
+async function login(){loadLocal();initFirebase();let un=$('u').value.trim().toLowerCase(), pw=$('p').value.trim(); if(cloudReady){await firebase.auth().signInAnonymously(); await ensureSeed(); await pullUsers();} const u=state.users.find(x=>x.username?.toLowerCase()===un&&x.password===pw&&x.active!==false); if(!u){$('loginMsg').textContent='Invalid username or password';return} current=u;$('login').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=u.name;$('role').textContent=u.role;buildNav();startRealtime();go('dashboard')}
+function logout(){unsubscribers.forEach(f=>f&&f());unsubscribers=[];current=null;$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+function can(a){if(!current)return false;if(current.role==='Admin')return true;if(a==='settings')return false;if(a==='proposal')return ['Coordinator','Supervisor'].includes(current.role);return true}
+function buildNav(){let items=[['dashboard','Dashboard'],['jobs','Jobs'],['create','Create Job'],['notifications','Notifications']]; if(can('proposal'))items.push(['proposal','Proposal / Quotation']); if(can('settings'))items.push(['settings','Administration']); $('nav').innerHTML=items.map(i=>`<button class="${activeView===i[0]?'active':''}" onclick="go('${i[0]}')">${i[1]}</button>`).join('')}
+function toggleMenu(){$('side').classList.toggle('open');$('drawerBackdrop').classList.toggle('show')}
+function go(v){activeView=v;buildNav();$('side').classList.remove('open');$('drawerBackdrop').classList.remove('show');render()}
+function setTitle(t,s=VERSION){$('pageTitle').textContent=t;$('pageSubtitle').textContent=s}
+
+function startRealtime(){if(!cloudReady)return;unsubscribers.forEach(f=>f&&f());unsubscribers=[];
+ let jq=db.collection('jobs').orderBy('createdAt','desc').limit(80); if(current.role==='Engineer')jq=db.collection('jobs').where('visibleTo','array-contains',current.id).orderBy('createdAt','desc').limit(80);
+ unsubscribers.push(jq.onSnapshot(s=>{state.jobs=s.docs.map(d=>({firestoreId:d.id,...d.data()}));saveLocal(); if(['dashboard','jobs'].includes(activeView))render();}));
+ unsubscribers.push(db.collection('notifications').where('toIds','array-contains',current.id).orderBy('createdAt','desc').limit(50).onSnapshot(s=>{let oldUnread=state.notifications.filter(n=>!n.read).length;state.notifications=s.docs.map(d=>({firestoreId:d.id,...d.data()}));saveLocal(); if(state.notifications.filter(n=>!n.read).length>oldUnread)notifyPopup(); if(['notifications','dashboard'].includes(activeView))render();}));
+ for(const col of ['customers','sites','proposals'])unsubscribers.push(db.collection(col).limit(150).onSnapshot(s=>{state[col]=s.docs.map(d=>({firestoreId:d.id,...d.data()}));saveLocal(); if(['settings','proposal','create','dashboard'].includes(activeView))render();}));
 }
+function notifyPopup(){let n=state.notifications.find(x=>!x.read); if(!n)return; if(Notification.permission==='granted')new Notification('PISL FieldOps',{body:n.message||'New notification',icon:'logo.png'}); if(navigator.vibrate)navigator.vibrate([180,80,180]);}
+async function enableInAppAlerts(){if(!('Notification'in window)){alert('Notifications not supported');return}let p=await Notification.requestPermission();alert('Notification permission: '+p+'. This version uses in-app/browser alerts only. FCM background push removed.')}
 
-function load() {
-  try {
-    let s = JSON.parse(localStorage.getItem(LS));
-    if (s) { state = Object.assign(state, s); normalizeState(); }
-  } catch(e) { console.warn('Fallback local storage state loaded', e); }
-}
+function render(){const el=$('view'); if(activeView==='dashboard')renderDashboard(el); if(activeView==='jobs')renderJobs(el); if(activeView==='create')renderCreate(el); if(activeView==='notifications')renderNotifications(el); if(activeView==='proposal')renderProposal(el); if(activeView==='settings')renderSettings(el)}
+function visibleJobs(){return state.jobs}
+function count(st){return state.jobs.filter(j=>st==='All'?j.status!=='Closed':j.status===st).length}
+function renderDashboard(el){setTitle('Dashboard');let unread=state.notifications.filter(n=>!n.read).length;let cards=[['All Open Jobs',count('All')],['Assigned',count('Assigned')],['Working',count('Working')],['Report Draft',count('Report Draft')],['Report Shared',count('Report Shared')],['Awaiting Closure',count('Awaiting Closure')],['Closed',count('Closed')],['Unread Alerts',unread]];el.innerHTML=`<div class="grid">${cards.map(c=>`<div class="card stat" onclick="go('${c[0].includes('Alert')?'notifications':'jobs'}')"><span class="muted">${c[0]}</span><h2>${c[1]}</h2></div>`).join('')}</div><div class=card><h3>Recent Jobs</h3>${jobTable(visibleJobs().slice(0,8))}</div>`}
+function jobTable(list){if(!list.length)return'<p class=muted>No jobs.</p>';return`<div class=tablewrap><table><thead><tr><th>Ticket</th><th>Customer/Site</th><th>Type/System</th><th>Status</th><th>Assigned</th><th>Action</th></tr></thead><tbody>${list.map(j=>`<tr><td><b>${j.ticketId}</b></td><td>${esc(j.customerName)}<br><span class=muted>${esc(j.siteName)}</span></td><td>${esc(j.type)}<br>${(j.systems||[]).map(s=>`<span class=pill>${esc(s)}</span>`).join('')}</td><td><span class="pill ${j.status==='Closed'?'ok':'warn'}">${esc(j.status)}</span></td><td>${esc(j.assignedToName||'')}</td><td><button class="btn secondary" onclick="openJob('${j.firestoreId}')">Open</button></td></tr>`).join('')}</tbody></table></div>`}
+function renderJobs(el){setTitle('Jobs');el.innerHTML=`<div class=card><h3>Operational Tickets</h3>${jobTable(visibleJobs())}</div><div id=jobDetail></div>`}
+function canClose(j){if(['Admin','Coordinator','Supervisor'].includes(current.role))return true;return current.role==='Engineer'&&j.createdById===current.id&&j.assignedToId===current.id&&j.type==='Service Call'}
+function renderChecklist(j){let systems=j.systems&&j.systems.length?j.systems:['Other'];return systems.map(sys=>{let items=(j.checklist&&j.checklist[sys])||CHECKLIST_TEMPLATES[sys]||CHECKLIST_TEMPLATES.Other;return `<div class=card><h4>${esc(sys)} Checklist</h4>${items.map((it,idx)=>{let checked=typeof it==='object'?it.checked:false;let label=typeof it==='object'?it.label:it;return `<label class=checkrow><input type=checkbox data-sys="${esc(sys)}" data-label="${esc(label)}" ${checked?'checked':''}> ${esc(label)}</label>`}).join('')}</div>`}).join('')}
+function collectChecklist(){let out={};document.querySelectorAll('input[data-sys]').forEach(x=>{let sys=x.getAttribute('data-sys'),label=x.getAttribute('data-label');if(!out[sys])out[sys]=[];out[sys].push({label,checked:x.checked})});return out}
+function openJob(id){let j=state.jobs.find(x=>x.firestoreId===id);let detail=$('jobDetail')||$('view');detail.innerHTML=`<div class=card><h3>${esc(j.ticketId)} - ${esc(j.customerName)}</h3><p><b>Status:</b> ${esc(j.status)} | <b>Photo:</b> ${esc(j.photoPolicy||'Optional')}</p><p><b>Scope:</b> ${esc(j.scope||'')}</p><label>Work Notes / Report Summary</label><textarea id=j_notes>${esc(j.notes||'')}</textarea><label>Customer Remarks</label><textarea id=j_cust>${esc(j.customerRemarks||'')}</textarea></div>${renderChecklist(j)}<div class=card><h4>Photo Evidence</h4><div class=photoGrid>${['Before','During','After','Customer'].map(k=>`<div class=photoBox><b>${k} Photo</b><input type=file accept=image/* capture=environment onchange="attachPhoto('${j.firestoreId}','${k}',this)"><small>${photoCount(j,k)} attached</small></div>`).join('')}</div><div class=actions>${STATUSES.filter(s=>s!=='Closed').map(s=>`<button class="btn secondary" onclick="updateJob('${id}','${s}')">${s}</button>`).join('')}${canClose(j)?`<button class="btn ok" onclick="updateJob('${id}','Closed')">Close Job</button>`:''}<button class=btn onclick="printReport('${id}')">Print/PDF</button><button class=btn onclick="shareWhatsApp('${id}')">WhatsApp</button><button class=btn onclick="shareEmail('${id}')">Email</button></div></div>`}
+function photoCount(j,k){return Object.values(j.photos||{}).filter(p=>p.type===k).length}
+async function updateJob(id,status){let j=state.jobs.find(x=>x.firestoreId===id);let data={status,notes:$('j_notes')?.value||'',customerRemarks:$('j_cust')?.value||'',checklist:collectChecklist(),updatedAt:now(),updatedBy:current.name};if(status==='Closed'&&j.photoPolicy==='Required'&&!Object.keys(j.photos||{}).length){alert('Photo evidence required');return}await db.collection('jobs').doc(id).update(data);await notifyRelevant(j,`Job ${j.ticketId} updated to ${status}`)}
+async function notifyRelevant(j,msg){let ids=[...(j.visibleTo||[])];await db.collection('notifications').add({title:'FieldOps Update',message:msg,toIds:[...new Set(ids)],read:false,jobId:j.firestoreId||'',createdAt:now()})}
+function buildVisibleTo(a){let ids=[a,current.id];let u=state.users.find(x=>x.id===a);if(u?.managerId)ids.push(u.managerId);state.users.filter(x=>['Admin','Coordinator','Supervisor'].includes(x.role)).forEach(x=>ids.push(x.id));return[...new Set(ids)]}
+function renderCreate(el){setTitle('Create Job');let eng=state.users.filter(u=>u.role==='Engineer').map(u=>`<option value="${u.id}" ${current.role==='Engineer'&&u.id===current.id?'selected':''}>${u.name}</option>`).join('');el.innerHTML=`<div class=card><h3>New Job</h3><div class="grid two"><div><label>Customer</label><input id=cj_customer list=custList><datalist id=custList>${state.customers.map(c=>`<option value="${esc(c.name)}">`).join('')}</datalist></div><div><label>Site</label><input id=cj_site list=siteList><datalist id=siteList>${state.sites.map(s=>`<option value="${esc(s.name)}">`).join('')}</datalist></div></div><label>Scope / Complaint</label><textarea id=cj_scope></textarea><div class="grid two"><div><label>Job Type</label><select id=cj_type>${['Service Call','PM Visit','AMC Visit','Breakdown','Installation','Commissioning','Survey','Project Work'].map(x=>`<option>${x}</option>`).join('')}</select></div><div><label>Photo Evidence Policy</label><select id=cj_photo>${['Optional','Required','Not Permitted by Client'].map(x=>`<option>${x}</option>`).join('')}</select></div></div><label>Systems</label><div class=actions>${SYSTEMS.map(s=>`<label class=pill><input type=checkbox name=sys value="${s}"> ${s}</label>`).join('')}</div><div class="grid two"><div><label>Assign To</label><select id=cj_eng>${eng}</select></div><div><label>Priority</label><select id=cj_priority>${['Normal','High','Critical'].map(x=>`<option>${x}</option>`).join('')}</select></div></div><button class="btn ok full" onclick=createJob()>Create Job</button></div>`}
+async function createJob(){let assigned=state.users.find(u=>u.id===$('cj_eng').value)||current;let customer=$('cj_customer').value.trim(),site=$('cj_site').value.trim();if(!customer||!site){alert('Customer/site required');return}await db.collection('customers').doc(customer.toLowerCase().replace(/\W+/g,'_')).set({name:customer,updatedAt:now()},{merge:true});await db.collection('sites').doc((customer+'_'+site).toLowerCase().replace(/\W+/g,'_')).set({name:site,customerName:customer,updatedAt:now()},{merge:true});let systems=[...document.querySelectorAll('input[name=sys]:checked')].map(x=>x.value);let job={ticketId:uid('SRV'),customerName:customer,siteName:site,type:$('cj_type').value,priority:$('cj_priority').value,systems,assignedToId:assigned.id,assignedToName:assigned.name,createdById:current.id,createdByName:current.name,status:'Assigned',photoPolicy:$('cj_photo').value,scope:$('cj_scope').value,visibleTo:buildVisibleTo(assigned.id),createdAt:now(),updatedAt:now(),photos:{},checklist:{}};let r=await db.collection('jobs').add(job);await notifyRelevant({...job,firestoreId:r.id},`New job assigned: ${job.ticketId}`);go('jobs')}
 
-function save() {
-  normalizeState();
-  localStorage.setItem(LS, JSON.stringify(state));
-}
+async function attachPhoto(jobId,type,input){let f=input.files?.[0];if(!f)return;let dataUrl=await resizeImage(f,1280,.72);await db.collection('jobs').doc(jobId).set({photos:{[type+'_'+Date.now()]:{type,dataUrl,by:current.name,createdAt:now()}}},{merge:true})}
+function resizeImage(file,max=1280,q=.72){return new Promise(res=>{let img=new Image(),r=new FileReader();r.onload=e=>{img.onload=()=>{let w=img.width,h=img.height;if(w>max||h>max){let f=Math.min(max/w,max/h);w*=f;h*=f}let c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',q))};img.src=e.target.result};r.readAsDataURL(file)})}
 
-async function initFirebase() {
-  if (typeof firebase === 'undefined') return false;
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
-    if (firebase.auth && !firebase.auth().currentUser) {
-      try { await firebase.auth().signInAnonymously(); } catch(authErr) { console.warn('Anonymous auth failed, continuing if rules allow public test access.', authErr); }
-    }
-    db = firebase.firestore();
-    cloudReady = true;
-    return true;
-  } catch(e) {
-    console.warn('Firebase initialization skipped. Running local mode.', e);
-    cloudReady = false;
-    return false;
-  }
-}
+function reportText(j){let checklist=Object.entries(j.checklist||{}).map(([sys,items])=>`\n${sys}:\n`+items.map(i=>`- ${i.checked?'✓':'☐'} ${i.label}`).join('\n')).join('\n');return `PISL FieldOps Report\nTicket: ${j.ticketId}\nCustomer: ${j.customerName}\nSite: ${j.siteName}\nStatus: ${j.status}\nEngineer: ${j.assignedToName}\nScope: ${j.scope||''}\nWork Notes: ${j.notes||''}\nCustomer Remarks: ${j.customerRemarks||''}\nChecklist:${checklist||' Not updated'}`;}
+function shareWhatsApp(id){let j=state.jobs.find(x=>x.firestoreId===id);location.href='https://wa.me/?text='+encodeURIComponent(reportText(j))}
+function shareEmail(id){let j=state.jobs.find(x=>x.firestoreId===id);location.href='mailto:?subject='+encodeURIComponent('Service Report '+j.ticketId)+'&body='+encodeURIComponent(reportText(j))}
+function printReport(id){let j=state.jobs.find(x=>x.firestoreId===id);let w=window.open('','_blank');w.document.write(`<html><body style="font-family:Arial;padding:30px"><img src="logo.png" style="width:120px"><h1>Field Service Report</h1><pre>${esc(reportText(j))}</pre><h3>Photo Evidence</h3><p>${j.photoPolicy==='Not Permitted by Client'?'Photography not permitted by client policy.':Object.keys(j.photos||{}).length+' photo(s) attached.'}</p></body></html>`);w.document.close();w.print()}
 
-async function login() {
-  load();
-  const uVal = document.getElementById('u').value.trim().toLowerCase();
-  const pVal = document.getElementById('p').value.trim();
-  const user = state.users.find(x => x.username.toLowerCase() === uVal && x.password === pVal);
-  
-  if (!user) {
-    document.getElementById('loginMsg').textContent = 'Invalid parameters.';
-    return;
-  }
-  current = user;
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('who').textContent = current.name;
-  document.getElementById('role').textContent = `${current.role} [${current.squad}]`;
-  
-  await initFirebase();
-  buildNav();
-  go('dashboard');
-}
+function renderNotifications(el){setTitle('Notifications');el.innerHTML=`<div class=card><h3>Notification Center</h3>${state.notifications.map(n=>`<div class=card><b>${esc(n.title)}</b><p>${esc(n.message)}</p><button class="btn secondary" onclick="db.collection('notifications').doc('${n.firestoreId}').update({read:true})">Mark Read</button></div>`).join('')||'No notifications.'}</div>`}
+function renderProposal(el){setTitle('Proposal / Quotation');el.innerHTML='<div class=card><h3>Proposal Library</h3><p>Proposal module retained for quotation/proposal reference. Use branded proposal templates for final commercial submissions.</p></div>'}
+function renderSettings(el){setTitle('Administration');el.innerHTML=`<div class="grid two"><div class=card><h3>Database Maintenance</h3><button class="btn secondary" onclick=backupJson()>Backup JSON</button><button class="btn warn" onclick=purgeOldNotifications()>Clean Read Notifications</button></div><div class=card><h3>Core Scope</h3><p class=muted>Active modules: users, jobs, realtime updates, system-wise checklists, service reports, photo uploads, WhatsApp sharing, email sharing, notifications, proposal reference.</p></div></div>`}
+function backupJson(){let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pisl-fieldops-backup.json';a.click()}
+async function purgeOldNotifications(){if(confirm('Delete read notifications?')){let s=await db.collection('notifications').where('read','==',true).get();s.forEach(d=>d.ref.delete())}}
 
-function logout() {
-  current = null;
-  document.getElementById('login').classList.remove('hidden');
-  document.getElementById('app').classList.add('hidden');
-}
-
-function buildNav() {
-  let navItems = [['dashboard', 'Dashboard'], ['jobs', 'Jobs']];
-  if (['Admin','Coordinator','Supervisor','Engineer'].includes(current.role)) {
-    navItems.push(['create', 'Create Job']);
-  }
-  if (['Admin','Partner','Coordinator'].includes(current.role)) {
-    navItems.push(['proposal', 'Proposal / Quotation']);
-  }
-  if (current.role === 'Admin') {
-    navItems.push(['settings', 'Settings']);
-  }
-  const navBox = document.getElementById('nav');
-  navBox.innerHTML = navItems.map(i => `<button type="button" class="${activeView===i[0]?'active':''}" onclick="go('${i[0]}')">${i[1]}</button>`).join('');
-}
-
-function toggleMenu() {
-  document.getElementById('side').classList.toggle('open');
-  document.getElementById('drawerBackdrop').classList.toggle('show');
-}
-
-function go(v) {
-  activeView = v;
-  const titles = {dashboard:'Dashboard', jobs:'Jobs', create:'Create Job', proposal:'Proposal / Quotation', settings:'Settings'};
-  const sub = {dashboard:'Live field operations overview', jobs:'View, update and close operational tickets', create:'Create and assign field jobs', proposal:'Create and manage proposals', settings:'Administration and database tools'};
-  if (document.getElementById('pageTitle')) document.getElementById('pageTitle').textContent = titles[v] || 'PISL FieldOps';
-  if (document.getElementById('pageSubtitle')) document.getElementById('pageSubtitle').textContent = sub[v] || ''; 
-  buildNav();
-  document.getElementById('side').classList.remove('open');
-  document.getElementById('drawerBackdrop').classList.remove('show');
-  
-  if (v === 'jobs') {
-    fetchJobsPage(true);
-  } else {
-    render();
-  }
-}
-
-async function fetchJobsPage(isFirstLoad = true) {
-  if (!db || !cloudReady) { render(); return; }
-  
-  try {
-    let query = db.collection('jobs').orderBy('createdAt', 'desc');
-    
-    if (current.role === 'Engineer') {
-      query = query.where('assignedTo', '==', current.name);
-    } else {
-      if (window.currentJobFilters.status !== 'All') {
-        query = query.where('status', '==', window.currentJobFilters.status);
-      }
-      if (window.currentJobFilters.engineer !== 'All') {
-        query = query.where('assignedTo', '==', window.currentJobFilters.engineer);
-      }
-    }
-    
-    if (isFirstLoad) {
-      lastVisibleJobDoc = null;
-      state.jobs = [];
-    } else if (lastVisibleJobDoc) {
-      query = query.startAfter(lastVisibleJobDoc);
-    }
-    
-    query = query.limit(JOBS_PAGE_SIZE);
-    const snapshot = await query.get();
-    
-    if (!snapshot.empty) {
-      lastVisibleJobDoc = snapshot.docs[snapshot.docs.length - 1];
-      snapshot.forEach(doc => {
-        let data = doc.data();
-        data.firestoreId = doc.id;
-        state.jobs.push(data);
-      });
-    }
-    save();
-    render();
-    appendPaginationControls(snapshot.docs.length === JOBS_PAGE_SIZE);
-  } catch (err) {
-    console.error("Scale Query Execution Failed:", err);
-    render();
-  }
-}
-
-function appendPaginationControls(hasNextPage) {
-  const tableContainer = document.querySelector('.tablewrap');
-  if (!tableContainer) return;
-  
-  const oldControls = document.getElementById('paginationUI');
-  if (oldControls) oldControls.remove();
-  
-  const uiDiv = document.createElement('div');
-  uiDiv.id = 'paginationUI';
-  uiDiv.style.margin = '14px 0';
-  uiDiv.style.display = 'flex';
-  uiDiv.style.justifyContent = 'space-between';
-  
-  uiDiv.innerHTML = `
-    <button class="btn secondary" onclick="fetchJobsPage(true)" style="width:auto;">🔄 Refresh</button>
-    ${hasNextPage ? `<button class="btn ok" onclick="fetchJobsPage(false)" style="width:auto;">Load Next ${JOBS_PAGE_SIZE} Tickets ➡️</button>` : '<span class="pill ok">All records loaded</span>'}
-  `;
-  tableContainer.after(uiDiv);
-}
-
-function render() {
-  const container = document.getElementById('view');
-  if (activeView === 'dashboard') renderDashboard(container);
-  else if (activeView === 'jobs') renderJobs(container);
-  else if (activeView === 'create') renderCreate(container);
-  else if (activeView === 'proposal') renderProposal(container);
-  else if (activeView === 'settings') renderSettings(container);
-}
-
-function renderDashboard(el) {
-  let openJobs = state.jobs.filter(j => j.status !== 'Closed').length;
-  let pipeline = state.proposals.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-
-  el.innerHTML = `
-    <div class="grid">
-      <div class="card stat" onclick="go('jobs')">
-        <span class="muted">Loaded Active Tickets</span>
-        <h2>${openJobs} Open</h2>
-      </div>
-      <div class="card stat" onclick="go('proposal')">
-        <span class="muted">Accounts Funnel</span>
-        <h2>₹ ${pipeline.toLocaleString('en-IN')}</h2>
-      </div>
-      <div class="card stat">
-        <span class="muted">Operational Efficiency</span>
-        <h2>99.4%</h2>
-      </div>
-      <div class="card stat">
-        <span class="muted">Active Staff Sync</span>
-        <h2>15-20 Active</h2>
-      </div>
-    </div>
-  `;
-}
-
-function getSystemChecklist(type) {
-  if (type.includes('Notifier') || type.includes('Fire')) {
-    return ["Verify EOL resistor loop structural loads.", "Measure ground isolation voltage values.", "Validate SLC line data continuous loop signals."];
-  }
-  if (type.includes('Win-PAK') || type.includes('Access')) {
-    return ["Test RS-485 control bus node signaling loops.", "Verify clean secondary biometric battery supply rails.", "Map enclosure tamper switch responses."];
-  }
-  return ["Perform loop continuity wire checks.", "Verify stable operating supply voltage metrics.", "Confirm logic terminal addressing parameters."];
-}
-
-function renderJobs(el) {
-  let html = `
-    <div class="card">
-      <h3>Active Task & Field Commission Registry</h3>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr><th>Ticket ID</th><th>Customer Account</th><th>Framework</th><th>Assigned To</th><th>Status</th><th>Action</th></tr>
-          </thead>
-          <tbody>
-  `;
-  if (state.jobs.length === 0) {
-    html += `<tr><td colspan="6" style="text-align:center;" class="muted">No current sync parameters loaded.</td></tr>`;
-  } else {
-    state.jobs.forEach((j, index) => {
-      html += `
-        <tr>
-          <td><strong>${j.id}</strong></td>
-          <td>${j.client}<br><span class="muted">${j.site}</span></td>
-          <td><span class="pill warn">${j.systemType}</span></td>
-          <td>${j.assignedTo}</td>
-          <td><span class="pill ${j.status==='Closed'?'ok':'warn'}">${j.status}</span></td>
-          <td><button class="btn secondary" onclick="viewJobTicket(${index})">Open Form</button></td>
-        </tr>
-      `;
-    });
-  }
-  html += `</tbody></table></div></div><div id="ticketDetailArea"></div>`;
-  el.innerHTML = html;
-}
-
-function viewJobTicket(idx) {
-  const j = state.jobs[idx];
-  const list = getSystemChecklist(j.systemType);
-  let checkHtml = `<div class="checklist-box"><h4>Mandatory Verification Checklist</h4>`;
-  
-  list.forEach((item, cIdx) => {
-    let checked = (j.checklist && j.checklist[cIdx]) ? "checked" : "";
-    checkHtml += `
-      <div class="checklist-item">
-        <input type="checkbox" id="chk_${cIdx}" ${checked} onchange="toggleCheckItem(${idx}, ${cIdx})">
-        <label for="chk_${cIdx}">${item}</label>
-      </div>
-    `;
-  });
-  checkHtml += `</div>`;
-
-  document.getElementById('ticketDetailArea').innerHTML = `
-    <div class="card">
-      <h3>Execution Core Layout: ${j.id}</h3>
-      ${checkHtml}
-      <div class="field">
-        <label>Engineering Observations / Comments Log</label>
-        <textarea id="ticketLogs">${j.logs || ''}</textarea>
-      </div>
-      <div class="actions">
-        <button class="btn ok" onclick="updateTicketState(${idx}, 'In Progress')">Set In Progress</button>
-        <button class="btn bad" onclick="updateTicketState(${idx}, 'Closed')">Handover & Close Ticket</button>
-      </div>
-    </div>
-  `;
-}
-
-function toggleCheckItem(jobIdx, checkIdx) {
-  if(!state.jobs[jobIdx].checklist) state.jobs[jobIdx].checklist = {};
-  state.jobs[jobIdx].checklist[checkIdx] = document.getElementById(`chk_${checkIdx}`).checked;
-  saveLocalAndCloudJob(state.jobs[jobIdx]);
-}
-
-function updateTicketState(idx, targetStatus) {
-  const j = state.jobs[idx];
-  const list = getSystemChecklist(j.systemType);
-  
-  if (targetStatus === 'Closed') {
-    for (let i = 0; i < list.length; i++) {
-      if (!j.checklist || !j.checklist[i]) {
-        alert(`Verification Failure: "${list[i]}" check must be marked complete before system handover.`);
-        return;
-      }
-    }
-  }
-  state.jobs[idx].status = targetStatus;
-  state.jobs[idx].logs = document.getElementById('ticketLogs').value;
-  saveLocalAndCloudJob(state.jobs[idx]);
-  go('jobs');
-}
-
-function saveLocalAndCloudJob(job) {
-  save();
-  if (db && cloudReady && job.firestoreId) {
-    db.collection('jobs').doc(job.firestoreId).update(job).catch(e => console.warn("Cloud save deferred: ", e));
-  }
-}
-
-function renderCreate(el) {
-  let userOptions = state.users.filter(u => u.role === 'Engineer')
-    .map(u => `<option value="${u.name}">${u.name}</option>`).join('');
-
-  el.innerHTML = `
-    <div class="card">
-      <h3>Dispatch New System Ticket</h3>
-      <div class="field">
-        <label>Account Target</label>
-        <select id="c_client">${state.clients.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-      </div>
-      <div class="field">
-        <label>Facility Site Layout</label>
-        <select id="c_site">${state.sites.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
-      </div>
-      <div class="field">
-        <label>System Platform Target</label>
-        <select id="c_system">
-          <option value="Notifier Fire Alarm System">Notifier Fire Alarm Loop Integration</option>
-          <option value="Honeywell Win-PAK Access Control">Honeywell Win-PAK Controller Matrix</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Primary Field Engineer Assignment</label>
-        <select id="c_assigned">${userOptions}</select>
-      </div>
-      <button class="btn" style="width:100%;" onclick="submitTicketForm()">Publish Ticket to Cloud</button>
-    </div>
-  `;
-}
-
-function submitTicketForm() {
-  let newJob = {
-    id: 'TKT-' + Math.floor(Math.random() * 90000 + 10000),
-    client: document.getElementById('c_client').value,
-    site: document.getElementById('c_site').value,
-    systemType: document.getElementById('c_system').value,
-    assignedTo: document.getElementById('c_assigned').value,
-    status: 'Assigned', logs: '', checklist: {},
-    createdAt: new Date().toISOString()
-  };
-
-  if (db && cloudReady) {
-    db.collection('jobs').add(newJob).then(() => { go('jobs'); });
-  } else {
-    state.jobs.push(newJob);
-    save();
-    go('jobs');
-  }
-}
-
-function renderProposal(el) {
-  let html = `
-    <div class="card">
-      <h3>Proposals & Estimates Ledger</h3>
-      <div class="tablewrap"><table>
-          <thead><tr><th>Ref</th><th>Account</th><th>Value</th><th>Status</th></tr></thead>
-          <tbody>`;
-  state.proposals.forEach(p => {
-    html += `<tr><td><b>${p.ref}</b></td><td>${p.client}</td><td>₹ ${p.amount}</td><td>${p.status}</td></tr>`;
-  });
-  html += `</tbody></table></div></div>`;
-  el.innerHTML = html;
-}
-
-window.onload = function() { load(); };
-
-function renderSettings(el) {
-  if (!current || current.role !== 'Admin') {
-    el.innerHTML = `<div class="card"><h3>Access restricted</h3><p class="muted">Only Admin can access settings.</p></div>`;
-    return;
-  }
-  el.innerHTML = `
-    <div class="card">
-      <h3>Administration</h3>
-      <div class="grid two">
-        <div>
-          <h4>Users</h4>
-          <div class="tablewrap"><table><thead><tr><th>Name</th><th>Role</th><th>Username</th></tr></thead><tbody>
-            ${state.users.map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td>${u.username}</td></tr>`).join('')}
-          </tbody></table></div>
-        </div>
-        <div>
-          <h4>Database Maintenance</h4>
-          <button class="btn secondary" onclick="backupJson()">Backup JSON</button>
-          <button class="btn warn" onclick="cleanClosedJobs()">Clean Closed Jobs</button>
-          <button class="btn bad" onclick="purgeOperationalData()">Purge Jobs & Proposals</button>
-          <p class="muted">Always take backup before purge. Users/customers/sites are retained unless manually edited.</p>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function backupJson() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'pisl-fieldops-backup-' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-async function cleanClosedJobs() {
-  if (!confirm('Backup recommended. Delete all locally loaded closed jobs?')) return;
-  const closed = state.jobs.filter(j=>j.status==='Closed');
-  state.jobs = state.jobs.filter(j=>j.status!=='Closed');
-  save();
-  if (db && cloudReady) {
-    for (const j of closed) {
-      if (j.firestoreId) await db.collection('jobs').doc(j.firestoreId).delete().catch(console.warn);
-    }
-  }
-  go('settings');
-}
-
-async function purgeOperationalData() {
-  if (!confirm('This will clear jobs and proposals from this app state. Continue?')) return;
-  state.jobs = [];
-  state.proposals = [];
-  save();
-  alert('Local operational data cleared. For full cloud purge, use Firestore console or collection delete tools.');
-  go('settings');
-}
-
-function registerPWA() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js').catch(e=>console.warn('Service worker registration failed', e));
-  }
-}
-registerPWA();
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('installBtn')?.classList.remove('hidden')});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;$('installBtn').classList.add('hidden')}else alert('Use browser menu → Add to Home Screen')}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(console.warn);
+window.onload=()=>loadLocal();

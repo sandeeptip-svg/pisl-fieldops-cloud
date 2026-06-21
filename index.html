@@ -3,123 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>PISL FieldOps Enterprise v37.1 Polished</title>
+<title>PISL FieldOps Enterprise v39.0</title>
 <link rel="manifest" href="manifest.json">
-<style>
-:root {
-  --primary: #163e73; --accent: #f28c28; --bg: #f4f7fb; --card: #fff;
-  --text: #172033; --muted: #667085; --line: #e3e8ef; --ok: #12805c;
-  --bad: #b42318; --warn: #b54708;
-}
-* { box-sizing: border-box; } 
-body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; } 
-button, input, select, textarea { font: inherit; } 
-.hidden { display: none !important; }
-
-.login { min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, #0e2e57, #1d5c9c); } 
-.login-card { width: min(440px, 92vw); background: #fff; border-radius: 22px; padding: 28px; box-shadow: 0 24px 70px rgba(0,0,0,0.3); } 
-.field { margin: 14px 0; } 
-label { font-weight: 700; font-size: 12px; color: #344054; display: block; margin-bottom: 6px; } 
-input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fff; } 
-textarea { min-height: 84px; resize: vertical; } 
-
-.btn { border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 800; cursor: pointer; background: var(--primary); color: #fff; margin: 4px; } 
-.btn.secondary { background: #eef2f7; color: var(--primary); } 
-.btn.warn { background: var(--warn); } 
-.btn.ok { background: var(--ok); } 
-.btn.bad { background: var(--bad); }
-
-.app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; } 
-.side { background: #102b4c; color: #fff; padding: 16px; position: sticky; top: 0; height: 100vh; overflow: auto; } 
-.side .app-logo-box { background: #fff; color: var(--primary); padding: 10px; border-radius: 12px; font-weight: 900; text-align: center; margin-bottom: 14px; }
-.nav button { width: 100%; text-align: left; margin: 6px 0; background: transparent; color: #dbe8ff; border: 1px solid #ffffff15; border-radius: 12px; padding: 11px; cursor: pointer; } 
-.nav button.active, .nav button:hover { background: #ffffff18; color: #fff; } 
-
-.main { padding: 20px; max-width: 1300px; width: 100%; margin: auto; } 
-.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid var(--line); padding-bottom: 10px; } 
-.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } 
-.grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); } 
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 4px 16px rgba(27,51,85,0.04); margin-bottom: 14px; } 
-.stat { cursor: pointer; } .stat h2 { margin: 2px 0; font-size: 32px; color: var(--primary); } 
-.muted { color: var(--muted); } 
-
-.pill { display: inline-flex; gap: 6px; align-items: center; border-radius: 999px; padding: 5px 10px; background: #eef2f7; font-weight: 800; font-size: 12px; margin: 3px; } 
-.pill.ok { background: #e8f7f0; color: var(--ok); } 
-.pill.warn { background: #fff3e5; color: #b54708; } 
-.pill.bad { background: #fee4e2; color: #b42318; }
-
-.checklist-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin: 12px 0; }
-.checklist-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 13px; }
-.checklist-item input[type="checkbox"] { width: auto; margin-top: 3px; cursor: pointer; }
-
-.tablewrap { overflow: auto; } 
-table { width: 100%; border-collapse: collapse; background: #fff; } 
-th, td { border-bottom: 1px solid var(--line); padding: 11px; text-align: left; vertical-align: top; } 
-th { background: #f8fafc; font-size: 12px; color: #475467; } 
-
-.menuBtn { display: none; border: 0; background: var(--primary); color: #fff; border-radius: 12px; padding: 10px 13px; font-weight: 900; cursor: pointer; }
-.drawerBackdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-
-@media(max-width: 760px) {
-  .app { display: block; }
-  .side { position: fixed !important; top: 0; left: -292px; width: 286px; height: 100dvh; z-index: 1000; transition: left .22s ease; background: #102b4c; }
-  .side.open { left: 0; }
-  .drawerBackdrop.show { opacity: 1; pointer-events: auto; }
-  .main { padding: 12px 14px 80px 14px; }
-  .topbar { display: grid; grid-template-columns: auto 1fr; align-items: center; padding: 10px 0; }
-  .menuBtn { display: inline-flex; }
-  .grid, .grid.two { grid-template-columns: 1fr !important; gap: 10px !important; }
-}
-</style>
+<link rel="stylesheet" href="css/main.css">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body>
-
 <div id="drawerBackdrop" class="drawerBackdrop" onclick="toggleMenu()"></div>
-
-<div id="login" class="login">
+<section id="login" class="login">
   <div class="login-card">
-    <div style="text-align:center;margin-bottom:14px;"><img src="logo.png" alt="Payaswini Integrated Solutions" style="max-width:180px;max-height:120px;object-fit:contain;"></div>
-    <div style="text-align:center; font-weight:900; color:#163e73; font-size:22px; margin-bottom:6px;">PISL FieldOps Enterprise</div>
-    <div style="text-align:center; font-weight:600; color:var(--muted); font-size:12px; margin-bottom:20px;">Integrated Service Management Platform</div>
-    <div class="field">
-      <label>Username</label>
-      <input type="text" id="u" placeholder="Username">
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="p" placeholder="••••••••">
-    </div>
-    <p id="loginMsg" style="color:var(--bad); font-weight:700; text-align:center;"></p>
-    <button type="button" class="btn" style="width:100%; margin-top:10px;" onclick="login()">Login</button>
+    <img src="logo.png" class="login-logo" alt="PISL">
+    <h1>PISL FieldOps Enterprise</h1>
+    <p>Core Field Operations Platform</p>
+    <label>Username</label><input id="u" placeholder="Username">
+    <label>Password</label><input id="p" type="password" placeholder="Password">
+    <div id="loginMsg" class="msg"></div>
+    <button class="btn full" onclick="login()">Login</button>
+    <button id="installBtn" class="btn secondary full hidden" onclick="installPWA()">Install App</button>
+    <small>© 2026 Payaswini Integrated Solutions</small>
   </div>
-</div>
-
-<div id="app" class="app hidden">
-  <div class="side" id="side">
-    <div class="app-logo-box"><img src="logo.png" alt="PISL" style="max-width:100%;max-height:90px;object-fit:contain;"><div>PISL FieldOps</div></div>
-    <div style="padding:4px 8px 12px 8px; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:10px; font-size:12px;">
-      User: <span id="who" style="font-weight:700; color:var(--accent);"></span><br>
-      Role: <span id="role" style="font-weight:600; opacity:0.9;"></span>
-    </div>
-    <div id="nav" class="nav"></div>
-    <button class="btn bad" style="width:100%; margin-top:30px;" onclick="logout()">Terminate Session</button>
-  </div>
-
-  <div class="main">
-    <div class="topbar">
-      <button class="menuBtn" onclick="toggleMenu()">☰ Menu</button>
-      <div>
-        <h1 id="pageTitle" style="margin:0; font-size:24px; color:var(--primary);">Dashboard</h1>
-        <div class="muted" id="pageSubtitle">Real-time performance matrix</div>
-      </div>
-    </div>
-    <div id="view"></div>
-  </div>
-</div>
-
+</section>
+<section id="app" class="app hidden">
+  <aside id="side" class="side">
+    <img src="logo.png" class="side-logo" alt="PISL">
+    <b id="who"></b><span id="role"></span>
+    <nav id="nav"></nav>
+    <button class="btn secondary full" onclick="logout()">Logout</button>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button class="menuBtn" onclick="toggleMenu()">☰</button>
+      <div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">v39.0 Core FieldOps Scope</p></div>
+      <button class="btn secondary" onclick="enableInAppAlerts()">Enable Alerts</button>
+    </header>
+    <section id="view"></section>
+  </main>
+</section>
+<script src="js/firebase-config.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
