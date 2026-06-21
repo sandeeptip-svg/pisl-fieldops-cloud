@@ -1,21 +1,25 @@
-# PISL FieldOps Enterprise v39.3 Core + FCM Stable
+# PISL FieldOps Enterprise v40.1 - Dynamic Workflow Enterprise
 
-Ready-to-upload GitHub Pages PWA build.
+Includes v39.8 workflow plus secure no-login customer report review link.
 
-## Included
-- Core dashboard
-- Job creation and lifecycle
-- Default system-wise checklist library
-- Job-specific checklist generation for Service Call / PM Visit
-- Photo upload preview and report attachment
-- Branded service report print/PDF
-- Proposal / quotation preview and print/PDF
-- Customer, site, engineer and checklist masters
-- Firestore realtime sync
-- FCM token registration
+Customer sign-off behavior:
+- Customer receives a private token link for one ticket report only.
+- Customer can view the full drafted report only; engineer data is read-only.
+- Customer can enter name/designation and digitally sign.
+- After approval, the link expires automatically.
+- Report is locked as Customer Signed.
+- Final PDF shows Digitally Signed by Customer with timestamp and signature.
+- Report sharing is enabled only after customer approval.
 
-## FCM Note
-The VAPID key input has been removed from the application screen. Set it once in `js/firebase-config.js` as `FCM_PUBLIC_VAPID_KEY`. This is the Firebase Web Push public key, not a private server key.
+Included: Jobs, smart workflow, checklist library, photo evidence, PDF/Excel exports, proposals, FCM-ready config, masters, customer sign-off.
+Excluded: Attendance, GPS, QR, SLA, asset history.
 
-## Excluded
-Attendance, GPS, QR, SLA and Asset History are intentionally excluded from this core build.
+
+## v40.1 Guided Field Workflow
+- Auto-save draft engine for checklist, notes, remarks, assignment changes.
+- Manual status dropdown minimized; key stage changes happen through controlled workflow actions only.
+- Engineer check-in automatically moves ticket to in-progress stage.
+- Engineer digital signature is mandatory before report generation/customer review.
+- Customer review/sign-off link remains report-only and expires after approval.
+- Final report sharing unlocked only after customer approval; report filename contains ticket number and description.
+- Check-out can be recorded before or after closure.

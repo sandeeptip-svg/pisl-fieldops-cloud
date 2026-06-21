@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>PISL FieldOps Enterprise v39.3</title>
+<title>PISL FieldOps Enterprise v40.0</title>
 <link rel="manifest" href="manifest.json"><link rel="stylesheet" href="css/main.css">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -8,10 +8,11 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 </head><body>
+<div id="toast" class="toast hidden"></div>
 <div id="drawerBackdrop" class="drawerBackdrop" onclick="toggleMenu(false)"></div>
 <section id="login" class="login"><div class="login-card">
-  <img src="assets/logo.png" class="login-logo" alt="PISL FieldOps">
-  <h1>PISL FieldOps Enterprise</h1><p>v39.3 Core + FCM Stable</p>
+  <div class="brandLogo"><img src="assets/logo.png" alt="Payaswini Integrated Solutions"></div>
+  <h1>PISL FieldOps Enterprise</h1><p>v40.0 Dynamic Workflow Enterprise</p>
   <label>Username</label><input id="u" placeholder="Username" autocomplete="username" value="sandeep">
   <label>Password</label><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()" value="admin123">
   <div id="loginMsg" class="msg"></div><button class="btn full" onclick="login()">Login</button>
@@ -20,10 +21,11 @@
 </div></section>
 <section id="app" class="app hidden">
   <aside id="side" class="side">
-    <img src="assets/logo.png" class="side-logo" alt="PISL FieldOps"><div class="userBlock"><b id="who"></b><span id="role"></span></div><nav id="nav"></nav>
+    <div class="sideBrand"><img src="assets/logo.png" alt="Payaswini Integrated Solutions"></div>
+    <div class="userBlock"><b id="who"></b><span id="role"></span></div><nav id="nav"></nav>
     <button class="btn secondary full" onclick="logout()">Logout</button>
   </aside>
-  <main class="main"><header class="topbar"><button class="menuBtn" onclick="toggleMenu(true)">☰</button><div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">v39.3 Core + FCM</p></div><button class="btn secondary fcmBtn" onclick="enableFCM()">Enable FCM</button></header><section id="view"></section></main>
+  <main class="main"><header class="topbar"><button class="menuBtn" onclick="toggleMenu(true)">☰</button><div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">v40.0 Dynamic Workflow Enterprise</p></div><div class="topActions"><button class="btn secondary" onclick="go('jobs')">Jobs Control Room</button></div></header><section id="view"></section></main>
 </section>
 <script src="js/firebase-config.js"></script><script src="js/app.js"></script>
 </body></html>
