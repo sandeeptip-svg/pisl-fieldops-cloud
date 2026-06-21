@@ -6,7 +6,8 @@ const firebaseConfig = {
   projectId: "pisl-field-ops",
   storageBucket: "pisl-field-ops.firebasestorage.app",
   messagingSenderId: "244015324981",
-  appId: "1:244015324981:web:e990586d3636c55cdaf67c"
+  appId: "1:244015324981:web:e990586d3636c55cdaf67c",
+  measurementId: "G-CZ2F9J65RB"
 };
 firebase.initializeApp(firebaseConfig);
 const messaging=firebase.messaging();

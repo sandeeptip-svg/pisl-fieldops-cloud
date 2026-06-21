@@ -1,25 +1,20 @@
-# PISL FieldOps Enterprise v40.1 - Dynamic Workflow Enterprise
+# PISL FieldOps Enterprise v40.8 FCM Minimal Alerts Build
 
-Includes v39.8 workflow plus secure no-login customer report review link.
+Rechecked and corrected build.
 
-Customer sign-off behavior:
-- Customer receives a private token link for one ticket report only.
-- Customer can view the full drafted report only; engineer data is read-only.
-- Customer can enter name/designation and digitally sign.
-- After approval, the link expires automatically.
-- Report is locked as Customer Signed.
-- Final PDF shows Digitally Signed by Customer with timestamp and signature.
-- Report sharing is enabled only after customer approval.
+## Firebase / FCM
+- Firebase project config applied for `pisl-field-ops`.
+- Active Web Push VAPID public key applied.
+- Minimal Notification Mode enabled by default.
 
-Included: Jobs, smart workflow, checklist library, photo evidence, PDF/Excel exports, proposals, FCM-ready config, masters, customer sign-off.
-Excluded: Attendance, GPS, QR, SLA, asset history.
+## Minimal alerts enabled only for
+- New Ticket Assigned
+- Ticket Reassigned
+- Escalation
+- Customer Approved Report
+- Ticket Closed
 
+No push alerts for checklist edits, photo uploads, report drafts, auto-save, hold, or normal updates.
 
-## v40.1 Guided Field Workflow
-- Auto-save draft engine for checklist, notes, remarks, assignment changes.
-- Manual status dropdown minimized; key stage changes happen through controlled workflow actions only.
-- Engineer check-in automatically moves ticket to in-progress stage.
-- Engineer digital signature is mandatory before report generation/customer review.
-- Customer review/sign-off link remains report-only and expires after approval.
-- Final report sharing unlocked only after customer approval; report filename contains ticket number and description.
-- Check-out can be recorded before or after closure.
+## Deployment
+Upload all files to GitHub Pages. After deployment, hard refresh once or uninstall/reinstall the PWA to clear old service worker cache.
