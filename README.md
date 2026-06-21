@@ -1,33 +1,21 @@
-# PISL FieldOps Enterprise v39.1 Core + FCM
+# PISL FieldOps Enterprise v39.3 Core + FCM Stable
 
-This GitHub-ready build keeps the existing Firebase project details unchanged in `js/firebase-config.js`.
+Ready-to-upload GitHub Pages PWA build.
 
-## Active modules
-- Dashboard
-- Job assignment
-- Realtime Firestore job updates
-- Firebase Cloud Messaging device token registration
-- In-app/browser notifications
-- Customer Master
-- Site Master
-- Engineer Master view
-- System-wise checklist templates
-- Photo evidence with preview and compression
+## Included
+- Core dashboard
+- Job creation and lifecycle
+- Default system-wise checklist library
+- Job-specific checklist generation for Service Call / PM Visit
+- Photo upload preview and report attachment
 - Branded service report print/PDF
-- WhatsApp report sharing
-- Email report sharing
-- Proposal / quotation reference
-- Admin backup and notification cleanup
+- Proposal / quotation preview and print/PDF
+- Customer, site, engineer and checklist masters
+- Firestore realtime sync
+- FCM token registration
 
-## Still excluded as requested
-- Attendance
-- GPS check-in/check-out
-- QR asset scanning
-- SLA timer
-- Asset-wise service history
+## FCM Note
+The VAPID key input has been removed from the application screen. Set it once in `js/firebase-config.js` as `FCM_PUBLIC_VAPID_KEY`. This is the Firebase Web Push public key, not a private server key.
 
-## FCM note
-Firebase config is preserved. To enable real background push on a device, open Administration and paste the Firebase Web Push public VAPID key once, then click **Enable FCM Alerts**. The app stores the device token in Firestore collection `pushTokens`.
-
-## Important production note
-This build still uses demo username/password login with anonymous Firebase auth. Before full production deployment, replace this with Firebase Authentication and role-based Firestore security rules.
+## Excluded
+Attendance, GPS, QR, SLA and Asset History are intentionally excluded from this core build.
