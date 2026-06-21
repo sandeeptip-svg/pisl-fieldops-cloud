@@ -1,0 +1,10 @@
+{
+  "name": "pisl-fieldops-notification-functions",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {"node": "20"},
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1"
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "name": "PISL FieldOps Enterprise v40.9",
+  "name": "PISL FieldOps Enterprise v41.0",
   "short_name": "PISL FieldOps",
   "start_url": "./",
   "display": "standalone",
@@ -11,5 +11,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "description": "PISL FieldOps Enterprise - Connectivity, Minimal Push and Detailed Checklist Build"
 }

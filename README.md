@@ -1,27 +1,36 @@
-# PISL FieldOps Enterprise v40.9 Firebase Health Dashboard Build
+# PISL FieldOps Enterprise v41.0
+## Connectivity + Minimal Push + Detailed Checklist Build
 
-Rechecked and corrected build.
+This build addresses:
+- Login/session retained after browser refresh.
+- FCM token registration corrected to use the main `service-worker.js` instead of conflicting service workers.
+- Push setup now shows clear success/failure reason in Administration.
+- Minimal push alert events only.
+- `notification_outbox` added for backend push delivery.
+- Firebase Cloud Function included under `cloud-functions/` for real FCM delivery.
+- Point-to-point detailed checklist library added for Comprehensive AMC, Non-Comprehensive AMC, PM, service, breakdown, installation, survey/audit and other jobs.
 
-## Firebase / FCM
-- Firebase project config applied for `pisl-field-ops`.
-- Active Web Push VAPID public key applied.
-- Minimal Notification Mode enabled by default.
+## Important Push Notification Note
+A static GitHub Pages web app can register the device token, but it cannot securely send FCM push messages by itself. Deploy the included Cloud Function once to send pushes from Firestore `notification_outbox`.
 
-## Minimal alerts enabled only for
+### Deploy Push Delivery Function
+```bash
+cd cloud-functions
+npm install
+firebase init functions
+firebase deploy --only functions
+```
+
+Use Firebase project: `pisl-fieldops-cloud-34513`.
+
+## Minimal Alerts Sent
 - New Ticket Assigned
 - Ticket Reassigned
 - Escalation
 - Customer Approved Report
 - Ticket Closed
 
-No push alerts for checklist edits, photo uploads, report drafts, auto-save, hold, or normal updates.
+No push alerts are sent for checklist edit, photo upload, auto-save, report draft, or normal updates.
 
-## Deployment
-Upload all files to GitHub Pages. After deployment, hard refresh once or uninstall/reinstall the PWA to clear old service worker cache.
-
-
-## v40.9 Update
-- Added Admin → Firebase System Health panel.
-- Admin can run live Firestore write/read connectivity test.
-- Shows Firebase Config, Cloud Mode, Firestore SDK, Storage SDK, FCM SDK, Service Worker, Notification Permission and VAPID key status.
-- Creates/updates `system_health/connectivity` automatically when the test is run.
+## Browser Requirement
+Push notification token generation works only on HTTPS, such as GitHub Pages. It will not work from `file://` local opening.
